@@ -1,9 +1,9 @@
 import { Router } from 'express';
+import AppointmentController from '../controllers/AppointmentController';
 
 const appointmentsRouter = Router();
 
-appointmentsRouter.post('/', (req, res) =>
-  res.json({ message: 'Hello GoStack' }),
-);
+appointmentsRouter.get('/', AppointmentController.list);
+appointmentsRouter.post('/', AppointmentController.create);
 
 export default appointmentsRouter;
