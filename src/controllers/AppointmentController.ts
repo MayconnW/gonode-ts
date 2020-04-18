@@ -1,36 +1,31 @@
 import { Request, Response } from 'express';
+import { getCustomRepository } from 'typeorm';
 import { parseISO } from 'date-fns';
-import AppointmentsRepository from '../repositories/Appointments';
-import AppointmentCreateService from '../services/CreateAppointment';
+import AppointmentsRepository from '../repositories/AppointmentsRepository';
+import AppointmentCreateService from '../services/CreateAppointmentService';
 
 class AppointmentController {
-  private appointmentsRepository: AppointmentsRepository;
+  public list = async (req: Request, res: Response): Promise<Response> => {
+    const appointmentsRepository = getCustomRepository(AppointmentsRepository);
+    return res.json({
+      appointments: await appointmentsRepository.find({
+        relations: ['provider'],
+      }),
+    });
+  };
 
-  constructor() {
-    this.appointmentsRepository = new AppointmentsRepository();
-  }
+  public create = async (req: Request, res: Response): Promise<Response> => {
+    const { provider_id, date } = req.body;
+    const parsedDate = parseISO(date);
 
-  public list = (req: Request, res: Response): Response =>
-    res.json({ appointments: this.appointmentsRepository.all() });
+    const createAppointment = new AppointmentCreateService();
 
-  public create = (req: Request, res: Response): Response => {
-    try {
-      const { provider, date } = req.body;
-      const parsedDate = parseISO(date);
+    const appointment = await createAppointment.execute({
+      date: parsedDate,
+      provider_id,
+    });
 
-      const createAppointment = new AppointmentCreateService(
-        this.appointmentsRepository,
-      );
-
-      const appointment = createAppointment.execute({
-        date: parsedDate,
-        provider,
-      });
-
-      return res.json({ appointment });
-    } catch (e) {
-      return res.status(400).json({ error: e.message });
-    }
+    return res.json({ appointment });
   };
 }
 
